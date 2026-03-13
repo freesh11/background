@@ -1,5 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constellation Hub</title>
 <style>
-/* Button panel */
+html,body{
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  background:#000000;
+  font-family:sans-serif;
+}
+
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100vw;
+  height:100vh;
+  background:#000000;
+  display:block;
+}
+
 #buttons{
   position:fixed;
   top:20px;
@@ -8,32 +31,162 @@
   flex-direction:column;
   gap:8px;
   z-index:10;
-  animation: floatPanel 4s ease-in-out infinite alternate;
 }
 
-/* Float animation for entire panel */
-@keyframes floatPanel {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-8px); }
-}
-
-/* Buttons: smaller, dark coding green */
 button{
-  padding:8px 14px;            
-  border:2px solid #0F9D58;    
+  padding:8px 14px;
+  border:2px solid #0F9D58;
   border-radius:6px;
-  background:transparent;       
-  color:#0F9D58;               
-  font-size:14px;              
-  font-weight:600;             
+  background:transparent;
+  color:#0F9D58;
+  font-size:14px;
+  font-weight:600;
   cursor:pointer;
-  transition:0.3s all;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
-/* Hover effect: rise + glow */
 button:hover{
-  transform: translateY(-4px);
-  background:rgba(15,157,88,0.1);
-  box-shadow: 0 0 8px rgba(15,157,88,0.6);
+  transform: translateY(-3px);
+  background: rgba(15,157,88,0.1);
+  box-shadow: 0 0 6px rgba(15,157,88,0.5);
+}
+
+#overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100vw;
+  height:100vh;
+  background:rgba(0,0,0,0.95);
+  display:none;
+  z-index:50; 
+}
+
+#overlay iframe{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100vw;
+  height:100vh;
+  border:none;
+  z-index:1;
+}
+
+#overlay button{
+  padding:6px 12px;
+  border:2px solid #0F9D58;
+  color:#0F9D58;
+  background:transparent;
+  font-size:16px;
+  font-weight:600;
+  border-radius:6px;
+  z-index:2;
+}
+
+#overlay button:hover{
+  background: rgba(15,157,88,0.1);
+  box-shadow: 0 0 6px rgba(15,157,88,0.5);
 }
 </style>
+</head>
+<body>
+
+<canvas id="space"></canvas>
+
+<div id="buttons">
+  <button onclick="showFNAF1()">FNAF 1</button>
+  <button onclick="alert('Button 2 clicked')">Button 2</button>
+  <button onclick="alert('Button 3 clicked')">Button 3</button>
+</div>
+
+<div id="overlay">
+  <button onclick="closeOverlay()">✖ Close</button>
+  <iframe id="gameFrame"></iframe>
+</div>
+
+<script>
+const canvas=document.getElementById("space");
+const ctx=canvas.getContext("2d");
+
+function resize(){canvas.width=window.innerWidth; canvas.height=window.innerHeight;}
+resize();
+window.addEventListener("resize",resize);
+
+let mouse={x:-1000,y:-1000};
+document.addEventListener("mousemove",e=>{mouse.x=e.clientX; mouse.y=e.clientY;});
+
+class Star{
+  constructor(x,y,cluster){this.x=x; this.y=y; this.prevX=x; this.prevY=y; this.vx=(Math.random()-0.5)*0.3; this.vy=(Math.random()-0.5)*0.3; this.cluster=cluster;}
+  update(){this.prevX=this.x; this.prevY=this.y; this.x+=this.vx; this.y+=this.vy;
+    if(this.x<0||this.x>canvas.width) this.vx*=-1;
+    if(this.y<0||this.y>canvas.height) this.vy*=-1;
+    let dx=this.x-mouse.x; let dy=this.y-mouse.y; let dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<150){this.x+=dx/18; this.y+=dy/18;}
+  }
+  draw(){
+    ctx.beginPath(); ctx.moveTo(this.prevX,this.prevY); ctx.lineTo(this.x,this.y);
+    ctx.strokeStyle="rgba(255,255,255,0.25)"; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(this.x,this.y,2.5,0,Math.PI*2);
+    ctx.shadowColor="white"; ctx.shadowBlur=10; ctx.fillStyle="white"; ctx.fill(); ctx.shadowBlur=0;
+  }
+}
+
+let stars=[]; let clusters=16; let perCluster=10;
+for(let c=0;c<clusters;c++){
+  let cx=Math.random()*canvas.width; let cy=Math.random()*canvas.height;
+  for(let i=0;i<perCluster;i++){stars.push(new Star(cx+(Math.random()-0.5)*220, cy+(Math.random()-0.5)*220, c));}
+}
+
+function connect(){
+  for(let i=0;i<stars.length;i++){
+    for(let j=i+1;j<stars.length;j++){
+      let a=stars[i]; let b=stars[j]; if(a.cluster!==b.cluster) continue;
+      let dx=a.x-b.x; let dy=a.y-b.y; let dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<130){ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.strokeStyle="rgba(255,255,255,0.15)"; ctx.lineWidth=1; ctx.stroke();}
+    }
+  }
+}
+
+let shootingStars=[];
+function createShootingStar(){shootingStars.push({x:Math.random()*canvas.width, y:-40, vx:9+Math.random()*3, vy:4+Math.random()*2, angle:0, spin:0.2+Math.random()*0.1, life:0, trail:[]});}
+setInterval(createShootingStar,3500);
+
+function drawStarShape(x,y,radius,rotation){
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    let angle=i*(Math.PI*2)/5+rotation;
+    let sx=x+Math.cos(angle)*radius; let sy=y+Math.sin(angle)*radius;
+    ctx.lineTo(sx,sy);
+    angle+=Math.PI/5;
+    sx=x+Math.cos(angle)*(radius/2); sy=y+Math.sin(angle)*(radius/2);
+    ctx.lineTo(sx,sy);
+  }
+  ctx.closePath();
+}
+
+function drawShootingStars(){
+  for(let i=0;i<shootingStars.length;i++){
+    let s=shootingStars[i]; s.trail.push({x:s.x,y:s.y}); if(s.trail.length>10) s.trail.shift();
+    for(let t=0;t<s.trail.length;t++){let p=s.trail[t]; let alpha=t/s.trail.length; ctx.beginPath(); ctx.arc(p.x,p.y,2,0,Math.PI*2); ctx.fillStyle="rgba(255,255,255,"+alpha+")"; ctx.fill();}
+    ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.angle);
+    ctx.shadowColor="white"; ctx.shadowBlur=20; ctx.fillStyle="white"; drawStarShape(0,0,6,0); ctx.fill(); ctx.restore();
+    s.x+=s.vx; s.y+=s.vy; s.angle+=s.spin; s.life++; if(s.life>90) shootingStars.splice(i,1);
+  }
+}
+
+function animate(){
+  ctx.fillStyle="rgba(0,0,0,0.35)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{s.update(); s.draw();});
+  connect();
+  drawShootingStars();
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+// ----------------- Overlay functions -----------------
+function showFNAF1(){const overlay=document.getElementById('overlay'); const frame=document.getElementById('gameFrame'); frame.src='https://irv77.github.io/hd_fnaf/1/'; overlay.style.display='block';}
+function closeOverlay(){const overlay=document.getElementById('overlay'); const frame=document.getElementById('gameFrame'); frame.src=''; overlay.style.display='none';}
+</script>
+</body>
+</html>
