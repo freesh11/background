@@ -7,10 +7,11 @@
 
 <style>
 
-body{
+html,body{
 margin:0;
+padding:0;
 overflow:hidden;
-background:#000;
+background:#000000;
 }
 
 canvas{
@@ -19,6 +20,7 @@ top:0;
 left:0;
 width:100vw;
 height:100vh;
+background:#000000;
 display:block;
 }
 
@@ -60,14 +62,14 @@ this.y=y
 this.prevX=x
 this.prevY=y
 
-this.vx=(Math.random()-0.5)*0.25
-this.vy=(Math.random()-0.5)*0.25
+this.vx=(Math.random()-0.5)*0.3
+this.vy=(Math.random()-0.5)*0.3
 
 this.cluster=cluster
 
 }
 
-move(){
+update(){
 
 this.prevX=this.x
 this.prevY=this.y
@@ -82,9 +84,9 @@ let dx=this.x-mouse.x
 let dy=this.y-mouse.y
 let dist=Math.sqrt(dx*dx+dy*dy)
 
-if(dist<140){
-this.x+=dx/20
-this.y+=dy/20
+if(dist<150){
+this.x+=dx/18
+this.y+=dy/18
 }
 
 }
@@ -96,15 +98,14 @@ ctx.moveTo(this.prevX,this.prevY)
 ctx.lineTo(this.x,this.y)
 
 ctx.strokeStyle="rgba(255,255,255,0.25)"
-ctx.lineWidth=1.5
-
+ctx.lineWidth=1.2
 ctx.stroke()
 
 ctx.beginPath()
 ctx.arc(this.x,this.y,2.5,0,Math.PI*2)
 
 ctx.shadowColor="white"
-ctx.shadowBlur=10
+ctx.shadowBlur=12
 
 ctx.fillStyle="white"
 ctx.fill()
@@ -116,7 +117,7 @@ ctx.shadowBlur=0
 }
 
 let stars=[]
-let clusters=14
+let clusters=16
 let perCluster=10
 
 for(let c=0;c<clusters;c++){
@@ -155,12 +156,12 @@ let dist=Math.sqrt(dx*dx+dy*dy)
 
 if(dist<130){
 
-ctx.strokeStyle="rgba(255,255,255,0.15)"
-ctx.lineWidth=1
-
 ctx.beginPath()
 ctx.moveTo(a.x,a.y)
 ctx.lineTo(b.x,b.y)
+
+ctx.strokeStyle="rgba(255,255,255,0.15)"
+ctx.lineWidth=1
 ctx.stroke()
 
 }
@@ -180,17 +181,17 @@ shootingStars.push({
 x:Math.random()*canvas.width,
 y:-40,
 
-vx:8+Math.random()*3,
+vx:9+Math.random()*3,
 vy:4+Math.random()*2,
 
 life:0,
-length:140
+length:160
 
 })
 
 }
 
-setInterval(createShootingStar,3500)
+setInterval(createShootingStar,3000)
 
 function drawShootingStars(){
 
@@ -236,11 +237,11 @@ shootingStars.splice(i,1)
 
 function animate(){
 
-ctx.fillStyle="rgba(0,0,0,0.25)"
+ctx.fillStyle="rgba(0,0,0,0.35)"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
 stars.forEach(s=>{
-s.move()
+s.update()
 s.draw()
 })
 
