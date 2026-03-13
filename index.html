@@ -10,7 +10,7 @@
 body{
 margin:0;
 overflow:hidden;
-background:#020210;
+background:#000;
 }
 
 canvas{
@@ -43,7 +43,7 @@ canvas.height = window.innerHeight
 resize()
 window.addEventListener("resize",resize)
 
-let mouse = {x:-1000,y:-1000}
+let mouse={x:-1000,y:-1000}
 
 document.addEventListener("mousemove",e=>{
 mouse.x=e.clientX
@@ -57,6 +57,9 @@ constructor(x,y,cluster){
 this.x=x
 this.y=y
 
+this.prevX=x
+this.prevY=y
+
 this.vx=(Math.random()-0.5)*0.25
 this.vy=(Math.random()-0.5)*0.25
 
@@ -65,6 +68,9 @@ this.cluster=cluster
 }
 
 move(){
+
+this.prevX=this.x
+this.prevY=this.y
 
 this.x+=this.vx
 this.y+=this.vy
@@ -76,9 +82,9 @@ let dx=this.x-mouse.x
 let dy=this.y-mouse.y
 let dist=Math.sqrt(dx*dx+dy*dy)
 
-if(dist<130){
-this.x+=dx/18
-this.y+=dy/18
+if(dist<140){
+this.x+=dx/20
+this.y+=dy/20
 }
 
 }
@@ -86,10 +92,19 @@ this.y+=dy/18
 draw(){
 
 ctx.beginPath()
-ctx.arc(this.x,this.y,2.2,0,Math.PI*2)
+ctx.moveTo(this.prevX,this.prevY)
+ctx.lineTo(this.x,this.y)
+
+ctx.strokeStyle="rgba(255,255,255,0.25)"
+ctx.lineWidth=1.5
+
+ctx.stroke()
+
+ctx.beginPath()
+ctx.arc(this.x,this.y,2.5,0,Math.PI*2)
 
 ctx.shadowColor="white"
-ctx.shadowBlur=8
+ctx.shadowBlur=10
 
 ctx.fillStyle="white"
 ctx.fill()
@@ -101,8 +116,8 @@ ctx.shadowBlur=0
 }
 
 let stars=[]
-let clusters=7
-let perCluster=12
+let clusters=14
+let perCluster=10
 
 for(let c=0;c<clusters;c++){
 
@@ -112,13 +127,11 @@ let cy=Math.random()*canvas.height
 for(let i=0;i<perCluster;i++){
 
 stars.push(
-
 new Star(
-cx+(Math.random()-0.5)*200,
-cy+(Math.random()-0.5)*200,
+cx+(Math.random()-0.5)*220,
+cy+(Math.random()-0.5)*220,
 c
 )
-
 )
 
 }
@@ -140,7 +153,7 @@ let dx=a.x-b.x
 let dy=a.y-b.y
 let dist=Math.sqrt(dx*dx+dy*dy)
 
-if(dist<140){
+if(dist<130){
 
 ctx.strokeStyle="rgba(255,255,255,0.15)"
 ctx.lineWidth=1
@@ -165,18 +178,19 @@ function createShootingStar(){
 shootingStars.push({
 
 x:Math.random()*canvas.width,
-y:-50,
+y:-40,
 
-vx:6+Math.random()*4,
-vy:3+Math.random()*2,
+vx:8+Math.random()*3,
+vy:4+Math.random()*2,
 
-life:0
+life:0,
+length:140
 
 })
 
 }
 
-setInterval(createShootingStar,4000)
+setInterval(createShootingStar,3500)
 
 function drawShootingStars(){
 
@@ -184,13 +198,28 @@ for(let i=0;i<shootingStars.length;i++){
 
 let s=shootingStars[i]
 
-ctx.strokeStyle="white"
-ctx.lineWidth=2
+let grad=ctx.createLinearGradient(
+s.x,
+s.y,
+s.x-s.length,
+s.y-s.length/2
+)
+
+grad.addColorStop(0,"rgba(255,255,255,1)")
+grad.addColorStop(1,"rgba(255,255,255,0)")
+
+ctx.strokeStyle=grad
+ctx.lineWidth=2.5
+
+ctx.shadowColor="white"
+ctx.shadowBlur=18
 
 ctx.beginPath()
 ctx.moveTo(s.x,s.y)
-ctx.lineTo(s.x-80,s.y-40)
+ctx.lineTo(s.x-s.length,s.y-s.length/2)
 ctx.stroke()
+
+ctx.shadowBlur=0
 
 s.x+=s.vx
 s.y+=s.vy
@@ -207,7 +236,8 @@ shootingStars.splice(i,1)
 
 function animate(){
 
-ctx.clearRect(0,0,canvas.width,canvas.height)
+ctx.fillStyle="rgba(0,0,0,0.25)"
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 stars.forEach(s=>{
 s.move()
